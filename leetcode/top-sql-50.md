@@ -131,3 +131,167 @@ from signups s
 left join confirmations c on s.user_id = c.user_id
 group by s.user_id
 ```
+
+## Basic Aggregate Functions
+
+### 620. Not Boring Movies
+
+```sql
+select * from cinema c
+where c.id % 2 <> 0 and c.description != 'boring'
+order by c.rating desc;
+```
+
+### 1251. Average Selling Price
+
+```sql
+-- Solution One
+select
+    p.product_id,
+    round(
+        case
+            when sum(u.units) is null then 0
+            else sum(p.price * u.units) / sum(u.units)
+        end,
+        2
+    ) as average_price
+from prices p
+left join UnitsSold u on 
+    p.product_id = u.product_id
+    and u.purchase_date between p.start_date and p.end_date
+group by p.product_id
+
+-- Solution Two
+select
+    p.product_id,
+    round(
+        coalesce(
+            sum(p.price*u.units) / nullif(sum(u.units), 0),
+            0
+        ),
+        2
+    ) as average_price
+from prices p
+left join UnitsSold u on 
+    p.product_id = u.product_id
+    and u.purchase_date between p.start_date and p.end_date
+group by p.product_id;
+```
+
+### 1075. Project Employees I
+
+```sql
+select
+    p.project_id,
+    round(avg(e.experience_years), 2) as average_years
+from project p
+join employee e on p.employee_id = e.employee_id
+group by p.project_id;
+```
+
+### 1633. Percentage of Users Attended a Contest
+
+```sql
+-- Solution One
+with user_count as (select count(*) as total from users)
+select
+    r.contest_id,
+    round(
+        count(*)/user_count.total * 100,
+        2
+    ) as percentage
+from users u
+join register r on u.user_id = r.user_id
+CROSS JOIN user_count
+group by r.contest_id
+order by percentage desc, r.contest_id asc;
+
+
+-- Solution Two
+select
+  r.contest_id,
+  round(
+    (count(r.contest_id) / (select count(*) from Users)) * 100,
+    2
+  ) as percentage
+from Users as u, Register as r
+where u.user_id = r.user_id
+group by r.contest_id
+order by percentage desc, contest_id asc;
+```
+
+### 1211. Queries Quality and Percentage
+
+```sql
+select
+    query_name,
+    round(
+        sum(rating/position) / count(*),
+        2
+    ) as quality,
+    round(
+        (sum(
+            case when rating < 3 then 1 else 0 end
+        ) / count(*) * 100),
+        2
+    ) as poor_query_percentage
+from queries
+group by query_name
+```
+
+### 1193. Monthly Transactions I
+
+```sql
+select
+    TO_CHAR(date_trunc('month', t.trans_date), 'YYYY-MM') as month,
+    t.country as country,
+    count(*) as trans_count,
+    sum(
+        case when t.state='approved' then 1 else 0 end
+    ) as approved_count,
+    sum(t.amount) as trans_total_amount,
+    sum(
+        case when t.state='approved' then t.amount else 0 end
+    ) as approved_total_amount
+from transactions t
+group by t.country, date_trunc('month', t.trans_date);
+```
+
+### 1174. Immediate Food Delivery II
+
+```sql
+select 
+    round(
+        (
+            sum(
+                case
+                    when d.order_date = d.customer_pref_delivery_date then 1.0
+                    else 0.0
+                end
+            )
+            / count(*)
+        ) * 100,
+        2
+    ) as immediate_percentage
+from Delivery d
+where (d.customer_id, d.order_date) in (
+    select customer_id, min(order_date) from Delivery group by customer_id
+);
+```
+
+### 550. Game Play Analysis IV
+
+```sql
+with first_login as (
+    select player_id, min(event_date) as event_date from activity group by player_id
+)
+select
+    round(
+        (count(a.*) * 1.00) / (select count(*) from first_login),
+        2
+    ) as fraction
+from activity a
+join first_login fl on
+    a.player_id = fl.player_id
+    and (a.event_date - fl.event_date) = 1;
+```
