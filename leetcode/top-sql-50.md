@@ -295,3 +295,83 @@ join first_login fl on
     a.player_id = fl.player_id
     and (a.event_date - fl.event_date) = 1;
 ```
+
+## Sorting and Grouping
+
+### 2356. Number of Unique Subjects Taught by Each Teacher
+
+```sql
+select
+    teacher_id,
+    count(distinct subject_id) as cnt
+from teacher
+group by teacher_id;
+```
+
+### 1141. User Activity for the Past 30 Days I
+
+```sql
+select 
+    a.activity_date as day,
+    count(distinct a.user_id) as active_users
+from activity a
+where a.activity_date between '2019-06-28' and '2019-07-27'
+group by a.activity_date
+```
+
+### 1070. Product Sales Analysis III
+
+```sql
+select
+    s.product_id,
+    s.year as first_year,
+    s.quantity,
+    s.price
+from sales s
+where (s.product_id, s.year) in (
+    select product_id, min(year) as fist_year from sales group by product_id
+);
+```
+
+### 596. Classes With at Least 5 Students
+
+```sql
+select class from courses
+group by class having count(*)>=5;
+```
+
+### 1729. Find Followers Count
+
+```sql
+select
+    user_id,
+    count(*) as followers_count
+from followers
+group by user_id
+order by user_id asc;
+```
+
+### 619. Biggest Single Number
+
+```sql
+select
+    max(num) as num
+from (
+    select num from mynumbers mn
+    group by mn.num having count(*) = 1
+);
+```
+
+### 1045. Customers Who Bought All Products
+
+```sql
+with total_product as (
+    select count(*) as total from product
+)
+select
+    c.customer_id
+from customer c
+cross join total_product
+group by c.customer_id, total_product.total
+having count(distinct c.product_key) = total_product.total;
+```
