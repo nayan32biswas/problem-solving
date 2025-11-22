@@ -375,3 +375,144 @@ cross join total_product
 group by c.customer_id, total_product.total
 having count(distinct c.product_key) = total_product.total;
 ```
+
+## Advanced Select and Joins
+
+### 1731. The Number of Employees Which Report to Each Employee
+
+```sql
+select
+    e.employee_id,
+    e.name,
+    count(*) as reports_count,
+    round(avg(e1.age)) as average_age
+from Employees e
+join Employees e1 on e.employee_id = e1.reports_to
+group by e.employee_id, e.name
+order by e.employee_id;
+```
+
+### 1789. Primary Department for Each Employee
+
+```sql
+select
+    x.employee_id,
+    x.department_id
+from (
+    select
+        e.*,
+        row_number() over(partition by e.employee_id order by primary_flag desc) as rn
+    from employee e
+) as x
+where x.rn = 1;
+```
+
+### 610. Triangle Judgement
+
+```sql
+select
+    *,
+    case
+        when (
+            x+y>z and x+z>y and y+z>x
+        ) then 'Yes'
+        else 'No'
+    end as triangle
+from Triangle
+```
+
+### 180. Consecutive Numbers
+
+```sql
+-- Solution One
+select
+    distinct l.num as ConsecutiveNums
+from logs l
+join logs l1 on l.id = l1.id + 1
+join logs l2 on l.id = l2.id + 2
+where l.num = l1.num and l.num = l2.num
+
+-- Solution Two
+select
+    distinct x.num as ConsecutiveNums
+from (
+    select
+        *,
+        lag(num, 1, null) over(order by id) as prev_num,
+        lead(num, 1, null) over(order by id) as next_num
+    from logs
+    order by id
+) as x
+where x.num = x.prev_num and x.num = x.next_num;
+```
+
+### 1164. Product Price at a Given Date
+
+```sql
+with products_with_lower_date as (
+    select * from products where change_date <= '2019-08-16'
+),
+products_expluding_future as (
+    select * from (
+        select
+            *,
+            row_number() over(partition by product_id order by change_date desc) as rn
+        from products_with_lower_date
+    ) as x
+    where x.rn = 1
+)
+select
+    product_id,
+    new_price as price
+from products_expluding_future
+union
+select
+    product_id,
+    10 as price
+from products
+where product_id not in (
+    select distinct product_id from products where change_date <= '2019-08-16'
+);
+```
+
+## 1204. Last Person to Fit in the Bus
+
+```sql
+select
+    x.person_name
+from (
+    select
+        *,
+        sum(weight) over(order by turn) as seq_sum
+    from Queue
+) as x
+where seq_sum <= 1000
+order by x.turn desc
+limit 1;
+```
+
+### 1907. Count Salary Categories
+
+```sql
+with income_range as (
+    select
+        case
+            when income < 20000 then 'Low Salary'
+            when income between 20000 and 50000 then 'Average Salary'
+            else 'High Salary'
+        end as category,
+        count(*) as accounts_count
+    from accounts
+    group by category
+)
+select
+    a.category,
+    case
+        when ir.accounts_count is null then 0
+        else ir.accounts_count
+    end
+from income_range ir
+full outer join unnest(
+    ARRAY['Low Salary', 'Average Salary', 'High Salary']::text[]
+) AS a(category) on a.category = ir.category;
+```
