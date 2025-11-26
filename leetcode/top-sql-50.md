@@ -516,3 +516,34 @@ full outer join unnest(
     ARRAY['Low Salary', 'Average Salary', 'High Salary']::text[]
 ) AS a(category) on a.category = ir.category;
 ```
+
+## Subqueries
+
+### 1978. Employees Whose Manager Left the Company
+
+```sql
+select
+    e.employee_id
+from employees e
+where
+    e.manager_id is not null
+    and e.salary < 30000
+    and e.manager_id not in (
+        select employee_id from employees
+    )
+order by e.employee_id asc;
+```
+
+### 626. Exchange Seats
+
+```sql
+select
+    case
+        when id%2=0 then id-1
+        when id=(select max(id) from seat) then id
+        else id+1
+    end as id,
+    student
+from seat
+order by id asc;
+```
