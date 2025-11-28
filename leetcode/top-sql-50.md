@@ -547,3 +547,57 @@ select
 from seat
 order by id asc;
 ```
+
+### 1341. Movie Rating
+
+```sql
+(
+    select
+        name as results
+    from movierating mr
+    join users u on mr.user_id = u.user_id
+    group by name
+    order by count(*) desc, name asc
+    limit 1
+)
+union all
+(
+    select
+        title as results
+    from movierating mr
+    join movies m on mr.movie_id = m.movie_id
+    where created_at between '2020-02-01' and '2020-02-29'
+    group by title
+    order by avg(rating) desc, title asc
+    limit 1
+);
+```
+
+### 1321. Restaurant Growth
+
+```sql
+with sales as (
+    select
+        visited_on,
+        sum(amount) as amount
+    from customer
+    group by visited_on
+    order by visited_on asc
+)
+select
+    visited_on,
+    sum(amount) over (
+        order by visited_on
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as amount,
+    round(
+        avg(amount) over (
+            order by visited_on
+            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+        ),
+        2
+    ) as average_amount
+from sales
+order by visited_on
+offset 6;
+```
