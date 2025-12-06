@@ -601,3 +601,16 @@ from sales
 order by visited_on
 offset 6;
 ```
+
+### 602. Friend Requests II: Who Has the Most Friends
+
+```sql
+select id, count(*) as num from (
+    select requester_id as id from RequestAccepted
+    union all
+    select accepter_id as id from RequestAccepted
+)
+group by id
+order by num desc
+limit 1;
+```
