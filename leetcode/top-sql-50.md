@@ -614,3 +614,36 @@ group by id
 order by num desc
 limit 1;
 ```
+
+### 585. Investments in 2016
+
+```sql
+select ROUND(SUM(cast(tiv_2016 as decimal)), 2) as tiv_2016 from insurance
+where tiv_2015 in (
+    select tiv_2015 from insurance
+    group by tiv_2015 having count(*) > 1
+) and pid in (
+    select max(pid) from insurance
+    group by lat, lon having count(*) = 1
+)
+```
+
+### 185. Department Top Three Salaries
+
+```sql
+with ranked_emp as(
+    select
+        *,
+        DENSE_RANK() over(partition by departmentId order by salary desc) dr
+    from employee
+)
+select
+    d.name as Department,
+    e.name as Employee,
+    e.Salary as Salary
+from Employee e
+join ranked_emp re on re.id = e.id
+join Department d on d.id = e.departmentId
+-- order by d.name, e.salary desc
+where re.dr <= 3;
+```
