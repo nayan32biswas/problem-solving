@@ -647,3 +647,93 @@ join Department d on d.id = e.departmentId
 -- order by d.name, e.salary desc
 where re.dr <= 3;
 ```
+
+## Advanced String Functions / Regex / Clause
+
+### 1667. Fix Names in a Table
+
+```sql
+select
+    user_id,
+    concat(
+        upper(substring(name, 1, 1)),
+        -- lower(substring(name, 2, length(name))) -- This is also valid
+        lower(substring(name, 2))
+     ) as name
+from users
+order by user_id;
+```
+
+### 1527. Patients With a Condition
+
+```sql
+select * from patients
+where conditions like 'DIAB1%' or conditions like '% DIAB1%';
+```
+
+### 196. Delete Duplicate Emails
+
+```sql
+delete from Person
+where id not in (
+    select min(id) from Person
+    group by email
+)
+```
+
+### 176. Second Highest Salary
+
+```sql
+select salary as SecondHighestSalary from (
+    (
+        select salary from employee
+        where salary != ( select max(salary) from employee )
+        order by salary desc
+        limit 1
+    )
+    union all
+    select null as salary
+)
+order by salary asc
+limit 1;
+```
+
+### 1484. Group Sold Products By The Date
+
+```sql
+select
+    sell_date,
+    count(*) as num_sold,
+    STRING_AGG(product, ',' order by product asc) as products
+from (
+    select sell_date, product from activities group by sell_date, product
+)
+group by sell_date
+order by sell_date;
+```
+
+### 1327. List the Products Ordered in a Period
+
+```sql
+with order_data as (
+    select
+        product_id,
+        sum(unit) as total_unit
+    from orders
+    where order_date between '2020-02-01' and '2020-02-29'
+    group by product_id
+    having sum(unit) >= 100
+)
+select
+    p.product_name as product_name,
+    o.total_unit as unit
+from products p
+join order_data o on p.product_id = o.product_id
+```
+
+### 1517. Find Users With Valid E-Mails
+
+```sql
+select * from users
+where mail ~ '^[A-Za-z][A-Za-z0-9._-]*@leetcode\.com$'
+```
